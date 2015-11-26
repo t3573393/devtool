@@ -18,12 +18,18 @@ conf = {
 
 if __name__ == "__main__":
     # set working path
+    logging.basicConfig(level=logging.DEBUG)
+
     project = os.path.split(os.path.realpath(__file__))[0]
+    if sys.argv:
+        project = sys.argv[1]
+    logging.debug('change path to %s' % project)
     os.chdir(project)
 
     file_list = list()
     logging.debug('retrieve from git')
-    result = os.popen("git diff-tree --no-commit-id --name-only -r %s" % conf['git-commit']).readlines()
+    result = os.popen("git ls-tree --name-only -r %s" % conf['git-commit']).readlines()
+    logging.debug('execute: %s' % "git ls-tree --name-only -r %s" % conf['git-commit'])
     for a_line in result:
         new_line = a_line.replace('\n', '')
         file_list.append(new_line)
@@ -42,7 +48,8 @@ if __name__ == "__main__":
             child.sendline(conf['password'])
             child.interact()
     else:
-        cmd = "rsync -e 'ssh -p %d' -aP %s %s %s@%s:%s" % (conf['port'], excl, a_file, conf["user"], conf["host"], conf["dest"])
+        # use all file
+        cmd = "rsync -e 'ssh -p %d' -aP %s . %s@%s:%s" % (conf['port'], excl, conf["user"], conf["host"], conf["dest"])
         # use pexpect
         logging.debug('execute: %s' % cmd)
         child = pexpect.spawn(cmd)
