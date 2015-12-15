@@ -70,7 +70,10 @@ def _decide_label_and_type(name, value):
     elif isinstance(value, list):
         return LABEL_REPEATED, _decide_list_type(name, value)
     elif isinstance(value, dict):
-        return LABEL_REPEATED, _decide_dict_type(name, value)
+        dict_type = _decide_dict_type(name, value)
+        if dict_type == TYPE_MESSAGE:
+            return LABEL_OPTIONAL, dict_type
+        return LABEL_REPEATED, dict_type
     return MAX_LABEL, MAX_TYPE
 
 
@@ -148,7 +151,7 @@ def get_new_name(name, alias_pool):
     return name
 
 
-def get_proto_file_des(name, json_str, alias_pool=None):
+def get_proto_file_des(name, json_str, alias_pool=None, custom_prefix=''):
     global global_proto_pool
     # field_name:{'label': label, 'field_type':type, 'flag': flag, 'ext': ext_info, 'custom_type': custom_type}
     proto_dict = dict()
@@ -168,7 +171,34 @@ def get_proto_file_des(name, json_str, alias_pool=None):
                 BASE_FIELD_TYPE: TYPE_MESSAGE,
                 BASE_FLAG: FLAG_CUSTOM,
                 BASE_EXT: value[0],
-                BASE_CUSTOM_TYPE: get_new_name(custom_name, alias_pool)
+                BASE_CUSTOM_TYPE: custom_prefix + get_new_name(custom_name, alias_pool)
+            }
+        elif field_type == TYPE_DICT_DICT:
+            custom_name = to_message_name(new_key)
+            proto_dict[new_key] = {
+                BASE_LABEL: LABEL_OPTIONAL,
+                BASE_FIELD_TYPE: TYPE_MESSAGE,
+                BASE_FLAG: FLAG_CUSTOM,
+                BASE_EXT: value,
+                BASE_CUSTOM_TYPE: custom_prefix + get_new_name(custom_name, alias_pool)
+            }
+        elif field_type == TYPE_DICT_LIST:
+            custom_name = to_message_name(new_key)
+            proto_dict[new_key] = {
+                BASE_LABEL: LABEL_OPTIONAL,
+                BASE_FIELD_TYPE: TYPE_MESSAGE,
+                BASE_FLAG: FLAG_CUSTOM,
+                BASE_EXT: value,
+                BASE_CUSTOM_TYPE: custom_prefix + get_new_name(custom_name, alias_pool)
+            }
+        elif field_type == TYPE_MESSAGE:
+            custom_name = to_message_name(new_key)
+            proto_dict[new_key] = {
+                BASE_LABEL: label,
+                BASE_FIELD_TYPE: TYPE_MESSAGE,
+                BASE_FLAG: FLAG_CUSTOM,
+                BASE_EXT: value,
+                BASE_CUSTOM_TYPE: custom_prefix + get_new_name(custom_name, alias_pool)
             }
         else:
             proto_dict[new_key] = {
@@ -184,7 +214,7 @@ def get_proto_file_des(name, json_str, alias_pool=None):
     # handle the submessage
     for field_name, field_value in proto_dict.items():
         if field_value[BASE_FIELD_TYPE] == TYPE_MESSAGE:
-            get_proto_file_des(field_value[BASE_CUSTOM_TYPE], field_value[BASE_EXT])
+            get_proto_file_des(field_value[BASE_CUSTOM_TYPE], field_value[BASE_EXT], custom_prefix=custom_prefix)
 
 
 def _get_label_str(label_value):
@@ -226,11 +256,15 @@ def _get_type_str(type_value):
     return match_dict[type_value]
 
 
-def generate_proto_file(package_name):
+def generate_proto_file(package_name, no_base=False):
     global global_proto_pool
     content = 'package\t%s;\n' % package_name
 
-    content += BaseProtoString
+    if not no_base:
+        content += BaseProtoString
+    else:
+        content += '\n'
+
     names = global_proto_pool.keys()
     names.sort()
     for name in names:
@@ -252,24 +286,35 @@ def generate_proto_file(package_name):
                 content += "    %s %s %s = %s %s;\n" % (_get_label_str(label), a_field[BASE_CUSTOM_TYPE],
                                                         a_field_name,  index, extra_str)
             else:
-                content += "    %s unknown_type %s =%s;\t#%s\n" % (_get_label_str(label),
+                content += "    %s unknown_type %s =%s;\t#%s\n" % (_get_label_str(LABEL_OPTIONAL),
                                                                    a_field_name,  index, a_field[BASE_EXT])
-                logging.error('message %s field :%s no generate' % (name, a_field_name))
+                logging.error('message %s field :%s no generate %s-%s' % (name, a_field_name, label, field_type))
             index += 1
         content += "}\n"
         content += "\n"
     return content
 
 
-def generate(package_name, root_message_name, json_str, target_file='result.proto', alias_pool=None):
+def generate(package_name, root_message_name, json_str, target_file='result.proto', alias_pool=None, custom_prefix='',no_base=False):
+    """
+    入口函数
+    :param package_name: 包名称
+    :param root_message_name:  根消息名称
+    :param json_str:  需要解析的 json
+    :param target_file:  目标文件路径
+    :param alias_pool: 别名列表
+    :param custom_prefix: 自定义前缀
+    :param no_base: 是否需要包含base的信息
+    :return:
+    """
 
     logging.debug('start ...')
     # generate the des
-    get_proto_file_des(root_message_name, json_str, alias_pool=alias_pool)
+    get_proto_file_des(root_message_name, json_str, alias_pool=alias_pool, custom_prefix=custom_prefix)
 
     # generate string by des
     with open(target_file, mode='w') as f:
-        f.write(generate_proto_file(package_name))
+        f.write(generate_proto_file(package_name, no_base=no_base))
 
     logging.debug('the end')
 
@@ -292,12 +337,7 @@ if __name__ == "__main__":
     # }"""
 
     json_str = """
-    {"beautySkills": [{
-        "skill_id": 1,
-        "rewards_type": 1,
-        "skill_name": "\u6bcf\u5929\u53ef\u4ee5\u9886\u53d6999\u70b9\u529f\u52cb",
-        "effect_res": "diaocan1", "hero_id": 4}
-    ]}
+    {"cmd": 262, "reqid": 7, "code": 200, "data": [[{"fdsa":3}]]}
     """
 
     # test parse
@@ -313,10 +353,8 @@ if __name__ == "__main__":
     # p.pprint(global_proto_pool)
 
     # package name, root message name, json string, alias mapping for message name and field name
-    generate('linfengtest', 'AllTemplate', json_str, alias_pool={
-        'Const': 'ConstTemplate',
-        'items': 'myitem'
-    })
+    generate('linfengtest', 'cmd_101', json_str, alias_pool={
+    }, custom_prefix='cmd_101_', no_base=True)
 
 
 
