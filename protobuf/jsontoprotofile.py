@@ -14,6 +14,8 @@ def _decide_scalar_type(value):
         return TYPE_INT32
     elif isinstance(value, long):
         return TYPE_INT64
+    elif value is None:
+        return TYPE_STRING
     return MAX_TYPE
 
 
@@ -277,7 +279,8 @@ def generate_proto_file(package_name, no_base=False):
             label = a_field[BASE_LABEL]
             field_type = a_field[BASE_FIELD_TYPE]
             if field_type not in [TYPE_LIST_LIST, TYPE_LIST_DICT, TYPE_DICT_LIST, TYPE_DICT_DICT, TYPE_MESSAGE]:
-                if field_type < 20 and label == LABEL_REPEATED:
+                if field_type in [TYPE_DOUBLE, TYPE_FLOAT, TYPE_INT64, TYPE_UINT64, TYPE_INT32,
+                                  TYPE_UINT32, TYPE_SINT32, TYPE_SINT64] and label == LABEL_REPEATED:
                     extra_str = '[packed=true]'
 
                 content += "    %s %s %s = %s %s;\n" % (_get_label_str(label), _get_type_str(field_type),
@@ -337,7 +340,7 @@ if __name__ == "__main__":
     # }"""
 
     json_str = """
-    {"cmd": 262, "reqid": 7, "code": 200, "data": [[{"fdsa":3}]]}
+{"monster_star": 1, "monster_strong": 1.0, "exists_num": [180000], "monster_level": 20, "open_time": null, "boss_monster": "", "reset_time": 1, "map_bg_res": ["battle_014"], "sweeping_times": 2, "map_kind": 4, "map_id": 40101, "boss_strong": 1.0, "monster_quality": 1, "monsters": {}, "enter_state": 1}
     """
 
     # test parse
@@ -353,8 +356,8 @@ if __name__ == "__main__":
     # p.pprint(global_proto_pool)
 
     # package name, root message name, json string, alias mapping for message name and field name
-    generate('linfengtest', 'cmd_101', json_str, alias_pool={
-    }, custom_prefix='cmd_101_', no_base=True)
+    generate('linfengtest', 'FairylandMapTemplate', json_str, alias_pool={
+    }, custom_prefix='', no_base=True)
 
 
 
