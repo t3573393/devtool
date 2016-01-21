@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<FCVocaPhraseList xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Phrases>
+    <Phrase>
+      <Eng>vessel</Eng>
+      <Phonetic>['ves(ə)l] </Phonetic>
+      <Defi>n. 器皿；轮船；脉管；大船; web. 容器；船舶；血管</Defi>
+      <Date>2016-01-20 23:18:51</Date>
+      <Note />
+    </Phrase>
+    <Phrase>
+      <Eng>plagiarism</Eng>
+      <Phonetic>['pleɪdʒə.rɪzəm] </Phonetic>
+      <Defi>n. 剽窃；抄袭；剽窃作品; web. 剽窃物；剽窃抄袭；剽窃计划</Defi>
+      <Date>2016-01-20 23:17:49</Date>
+      <Note />
+    </Phrase>
+  </Phrases>
+</FCVocaPhraseList>
