@@ -10,3 +10,6 @@ youdao2bingdict.py (transform the youdao and bing  new word dict data)
 
 protobuf->
 tool for generate proto file by the json format string
+
+jenkins->
+jenkins check config groovy script, usage by example  
