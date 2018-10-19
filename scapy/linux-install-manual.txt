@@ -1,0 +1,4 @@
+1. 查看是否安装 python2.4+, 通过在命令行中运行 Python (通过 Ctrl+D 退出)， 没有安装找系统部的人安装
+2. 将scapy.v2.2.0.zip 解压到指定文件夹下 unzip scapy.v2.2.0.zip -d scaip-v2.2.0
+3. 进入scapy的解压目标文件夹,运行 python setup.py install ，进行scapy的安装
+4. 将 mysniff.py 程序放到需要可运行的目录下

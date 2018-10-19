@@ -1,0 +1,4 @@
+1. 本地安装npcap-0.99-r7.exe 程序，需要启用其中的驱动
+2. 本地安装 python-3.6.4.exe 程序，接着将安装目录放到 环境变量 PATH 中
+3. 解压 scapy-master.zip 到 scapy-master文件下， 在命令行中进入目标文件 运行 python setup.py install ,进行 scapy 库安装
+4. 将 mysniff.py 程序放到需要可运行的目录下
