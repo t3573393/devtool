@@ -2,10 +2,25 @@ from scapy.all import *
 import os
 import sys
 import datetime
+import signal
 
 all_data = dict()
 file_names = dict()
 target_ip = None
+
+def signal_handler(_signo, _stack_frame):
+    for name_key in all_data:
+       index = 1
+       if name_key in file_names:
+           file_names[name_key] += 1
+       else:
+           file_names[name_key] = 1
+       index = file_names[name_key]
+       suffix = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
+       file = open(os.getcwd() + "/" + name_key + "-" + suffix+"-" +str(index) + ".dat", 'wb')
+       file.write(all_data[name_key])
+       file.close()
+    sys.exit(0)
 
 def printTcpPayload(pkg):
    if TCP not in pkg:
@@ -43,4 +58,6 @@ if __name__ == '__main__':
       target_ip = sys.argv[1]
       filter = "tcp and (dst host "+sys.argv[1]+" or src host "+sys.argv[1]+" )"
    print('sniff-filter:' + filter)
+   signal.signal(signal.SIGTERM, signal_handler)
+   signal.signal(signal.SIGINT, signal_handler)
    p = sniff(lfilter=filter_func, prn=printTcpPayload, store=0)
